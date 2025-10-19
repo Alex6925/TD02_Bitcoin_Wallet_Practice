@@ -52,3 +52,26 @@ def derive_child_private_key(parent_privkey: bytes, parent_chaincode: bytes, ind
 
     child_chaincode = IR
     return child_privkey, child_chaincode
+
+def derive_path(path: str, master_privkey: bytes, master_chaincode: bytes) -> tuple[bytes, bytes]:
+    
+    if not path.startswith("m/"):
+        raise ValueError("Path must start with 'm/'")
+
+    segments = path.lstrip("m/").split("/")
+    privkey, chaincode = master_privkey, master_chaincode
+
+    for seg in segments:
+        hardened = seg.endswith("'")
+        index_str = seg.rstrip("'")
+
+        if not index_str.isdigit():
+            raise ValueError(f"Invalid path segment: {seg}")
+
+        index = int(index_str)
+        if hardened:
+            index += 0x80000000  
+
+        privkey, chaincode = derive_child_private_key(privkey, chaincode, index)
+
+    return privkey, chaincode

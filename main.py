@@ -1,7 +1,7 @@
 import os
 import binascii
 from BIP39 import entropy_to_mnemonic, mnemonic_to_entropy
-from BIP32 import mnemonic_to_seed, master_key_from_seed, privkey_to_pubkey, derive_child_private_key
+from BIP32 import mnemonic_to_seed, master_key_from_seed, privkey_to_pubkey, derive_child_private_key, derive_path
 
 
 def main():
@@ -10,7 +10,8 @@ def main():
     print("2. Import existing mnemonic")
     print("3. Derive BIP32 master")
     print("4. Derive BIP32 child key (m/N)")
-    print("5. Exit")
+    print("5. Derive BIP32 path (m/N/M...)")
+    print("6. Exit")
 
     choice = input("Choose an option: ")
 
@@ -29,7 +30,7 @@ def main():
         except ValueError as e:
             print(f"Error: {e}")
     elif choice == "3":
-        mnemonic = input("\nEnter your mnemonic phrase (BIP39):\n> ")
+        mnemonic = input("\nEnter your mnemonic phrase:\n> ")
         try:
             _ = mnemonic_to_entropy(mnemonic)
         except ValueError as e:
@@ -43,8 +44,8 @@ def main():
         m_pub = privkey_to_pubkey(m_priv, compressed=True)
         print(f"Master public key (compressed, hex): {binascii.hexlify(m_pub).decode()}\n")
     elif choice == "4":
-        mnemonic = input("\nEnter your mnemonic phrase (BIP39):\n> ")
-        index = int(input("Enter child index (ex: 0 for m/0): "))
+        mnemonic = input("\nEnter your mnemonic phrase:\n> ")
+        index = int(input("Enter child index: "))
         seed = mnemonic_to_seed(mnemonic)
         m_priv, m_chain = master_key_from_seed(seed)
 
@@ -55,6 +56,23 @@ def main():
         print(f"Child private key (hex): {binascii.hexlify(child_priv).decode()}")
         print(f"Child chain code (hex):  {binascii.hexlify(child_chain).decode()}")
         print(f"Child public key (hex):  {binascii.hexlify(child_pub).decode()}\n")
+    elif choice == "5":
+        mnemonic = input("\nEnter your mnemonic phrase (BIP39):\n> ")
+        path = input("Enter derivation path (ex: m/0/1'/2): ")
+        seed = mnemonic_to_seed(mnemonic)
+        m_priv, m_chain = master_key_from_seed(seed)
+
+        try:
+            child_priv, child_chain = derive_path(path, m_priv, m_chain)
+            child_pub = privkey_to_pubkey(child_priv, compressed=True)
+
+            print(f"\nDerivation path: {path}")
+            print(f"Final private key (hex): {binascii.hexlify(child_priv).decode()}")
+            print(f"Final chain code (hex):  {binascii.hexlify(child_chain).decode()}")
+            print(f"Final public key (hex):  {binascii.hexlify(child_pub).decode()}\n")
+
+        except ValueError as e:
+            print(f"Error: {e}")
     else:
         print("Goodbye!")
 
