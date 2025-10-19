@@ -24,3 +24,35 @@ def entropy_to_mnemonic(entropy: bytes):
 
     mnemonic = " ".join(words)
     return mnemonic
+
+def mnemonic_to_entropy(mnemonic: str):
+    wordlist = load_wordlist()
+    words = mnemonic.strip().split()
+
+    if len(words) not in [12, 15, 18, 21, 24]:
+        raise ValueError("Invalid mnemonic length")
+
+    bits = ""
+    for word in words:
+        if word not in wordlist:
+            raise ValueError(f"Word '{word}' not found in BIP39 wordlist")
+        index = wordlist.index(word)
+        bits += bin(index)[2:].zfill(11)
+
+    total_bits = len(bits)
+    checksum_length = total_bits // 33
+    entropy_length = total_bits - checksum_length
+
+    entropy_bits = bits[:entropy_length]
+    checksum_bits = bits[-checksum_length:]
+
+    entropy_int = int(entropy_bits, 2)
+    entropy = entropy_int.to_bytes(entropy_length // 8, byteorder="big")
+
+    hash_bits = bin(int.from_bytes(hashlib.sha256(entropy).digest(), byteorder="big"))[2:].zfill(256)
+    expected_checksum = hash_bits[:checksum_length]
+
+    if checksum_bits != expected_checksum:
+        raise ValueError("Invalid checksum — mnemonic might be incorrect.")
+
+    return entropy

@@ -1,6 +1,6 @@
 import os
 import binascii
-from BIP39 import entropy_to_mnemonic
+from BIP39 import entropy_to_mnemonic, mnemonic_to_entropy
 
 def main():
     print("=== Bitcoin Wallet Practice (TD02) ===")
@@ -16,7 +16,13 @@ def main():
         print("\nGenerated mnemonic phrase:")
         print(mnemonic)
     elif choice == "2":
-        print("Importing mnemonic... (we’ll code that soon!)")
+        mnemonic = input("\nEnter your mnemonic phrase:\n> ")
+        try:
+            entropy = mnemonic_to_entropy(mnemonic)
+            print(f"\nRecovered entropy (hex): {binascii.hexlify(entropy).decode()}")
+            print(f"Entropy length: {len(entropy) * 8} bits\n")
+        except ValueError as e:
+            print(f"Error: {e}")
     else:
         print("Goodbye!")
 
