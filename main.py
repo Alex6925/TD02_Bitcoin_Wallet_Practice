@@ -1,7 +1,7 @@
 import os
 import binascii
 from BIP39 import entropy_to_mnemonic, mnemonic_to_entropy
-from BIP32 import mnemonic_to_seed, master_key_from_seed, privkey_to_pubkey
+from BIP32 import mnemonic_to_seed, master_key_from_seed, privkey_to_pubkey, derive_child_private_key
 
 
 def main():
@@ -9,7 +9,8 @@ def main():
     print("1. Generate new seed")
     print("2. Import existing mnemonic")
     print("3. Derive BIP32 master")
-    print("4. Exit")
+    print("4. Derive BIP32 child key (m/N)")
+    print("5. Exit")
 
     choice = input("Choose an option: ")
 
@@ -41,6 +42,19 @@ def main():
         print(f"Chain code (hex):         {binascii.hexlify(chain_code).decode()}")
         m_pub = privkey_to_pubkey(m_priv, compressed=True)
         print(f"Master public key (compressed, hex): {binascii.hexlify(m_pub).decode()}\n")
+    elif choice == "4":
+        mnemonic = input("\nEnter your mnemonic phrase (BIP39):\n> ")
+        index = int(input("Enter child index (ex: 0 for m/0): "))
+        seed = mnemonic_to_seed(mnemonic)
+        m_priv, m_chain = master_key_from_seed(seed)
+
+        child_priv, child_chain = derive_child_private_key(m_priv, m_chain, index)
+        child_pub = privkey_to_pubkey(child_priv, compressed=True)
+
+        print(f"\nChild index: m/{index}")
+        print(f"Child private key (hex): {binascii.hexlify(child_priv).decode()}")
+        print(f"Child chain code (hex):  {binascii.hexlify(child_chain).decode()}")
+        print(f"Child public key (hex):  {binascii.hexlify(child_pub).decode()}\n")
     else:
         print("Goodbye!")
 
